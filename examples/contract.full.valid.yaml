@@ -1,0 +1,81 @@
+contractVersion: 1.0.0
+id: ac-full-valid
+title: Full valid contract example
+objective: Demonstrate valid lifecycle transition plus full delivery metadata.
+scope:
+  in: Include schema, docs, templates, and scripts.
+  out: Exclude non-v1 enhancements.
+deliverables:
+  - name: Schema
+    path: schemas/agent-contract.v1.schema.json
+    owner: coder
+    required: true
+  - name: Docs
+    path: docs/agent-contract-kit.md
+    owner: writer
+constraints:
+  - Must support fresh-clone UX.
+acceptanceCriteria:
+  - all valid example files pass validation
+  - all invalid example files are detected as invalid
+verification:
+  commands:
+    - npm test
+    - npm run validate
+  successSignal: PASS for valid files and EXPECTED_FAIL for invalid files.
+handoff:
+  owner: orchestrator
+  channel: "#orchestrator"
+  due: "2026-03-01T10:00:00Z"
+lifecycle:
+  status: in_review
+  transition:
+    from: in_progress
+    to: in_review
+    reason: Build completed and awaiting acceptance.
+    at: "2026-02-26T01:00:00Z"
+behaviorContract:
+  role: coding-agent
+  objective: Produce changes with explicit verification evidence.
+  guardrails:
+    - Do not claim success without evidence.
+  escalation:
+    when:
+      - destructive action requested
+    action: ask-first
+  outputContract:
+    format: markdown
+    requiredSections:
+      - summary
+      - verification
+  toolsUsed:
+    - git
+    - npm
+ioContract:
+  tools:
+    - name: git
+      inputSchema:
+        type: object
+      outputSchema:
+        type: object
+      errorSchema:
+        type: object
+      policy:
+        timeoutMs: 60000
+        retry:
+          maxAttempts: 1
+          backoff: none
+          idempotent: false
+    - name: npm
+      inputSchema:
+        type: object
+      outputSchema:
+        type: object
+      errorSchema:
+        type: object
+      policy:
+        timeoutMs: 120000
+        retry:
+          maxAttempts: 1
+          backoff: none
+          idempotent: true

@@ -1,0 +1,23 @@
+tools:
+  - name: git
+    inputSchema:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+    outputSchema: not-an-object
+    errorSchema:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    policy:
+      timeoutMs: 60000
+      retry:
+        maxAttempts: 1
+        backoff: none
+        idempotent: false

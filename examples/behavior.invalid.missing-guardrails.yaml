@@ -1,0 +1,12 @@
+role: coding-agent
+objective: Invalid because guardrails are missing.
+escalation:
+  when:
+    - uncertain task boundaries
+  action: ask-first
+outputContract:
+  format: markdown
+  requiredSections:
+    - summary
+toolsUsed:
+  - git

@@ -1,0 +1,377 @@
+{
+  "$id": "https://openclaw.ai/schemas/agent-contract/defs.lifecycle.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "ready",
+        "in_progress",
+        "blocked",
+        "in_review",
+        "approved",
+        "rejected",
+        "done",
+        "cancelled"
+      ]
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "reason"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/status"
+        },
+        "to": {
+          "$ref": "#/$defs/status"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 5
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "transition": {
+          "$ref": "#/$defs/transition"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "transition"
+            ]
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "oneOf": [
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "draft"
+                      },
+                      "to": {
+                        "const": "ready"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "draft"
+                      },
+                      "to": {
+                        "const": "cancelled"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "ready"
+                      },
+                      "to": {
+                        "const": "in_progress"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "ready"
+                      },
+                      "to": {
+                        "const": "cancelled"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "in_progress"
+                      },
+                      "to": {
+                        "const": "blocked"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "in_progress"
+                      },
+                      "to": {
+                        "const": "in_review"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "in_progress"
+                      },
+                      "to": {
+                        "const": "cancelled"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "blocked"
+                      },
+                      "to": {
+                        "const": "in_progress"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "blocked"
+                      },
+                      "to": {
+                        "const": "cancelled"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "in_review"
+                      },
+                      "to": {
+                        "const": "approved"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "in_review"
+                      },
+                      "to": {
+                        "const": "rejected"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "rejected"
+                      },
+                      "to": {
+                        "const": "in_progress"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "rejected"
+                      },
+                      "to": {
+                        "const": "cancelled"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "from": {
+                        "const": "approved"
+                      },
+                      "to": {
+                        "const": "done"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "ready"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "ready"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "in_progress"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "in_progress"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "blocked"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "blocked"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "in_review"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "in_review"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "approved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "approved"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "rejected"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "rejected"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "done"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "done"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "cancelled"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "cancelled"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

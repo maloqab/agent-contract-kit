@@ -1,0 +1,40 @@
+contractVersion: 1.0.0
+id: {{id}}
+title: {{title}}
+objective: Ship a production-ready v1 agent contract kit with templates, schema validation, examples, and docs.
+scope:
+  in: Build schema + lifecycle transitions, generator UX, validation UX, examples, and docs.
+  out: No API server, no database, no hosted service.
+deliverables:
+  - name: Contract schema
+    path: schemas/agent-contract.v1.schema.json
+    owner: coder
+  - name: CLI generator
+    path: scripts/new-contract.mjs
+    owner: coder
+  - name: Validation runner
+    path: scripts/validate-contracts.mjs
+    owner: coder
+constraints:
+  - Fresh clone must work in three commands (install, new, validate).
+  - Validation must produce per-file errors and non-zero exit on failures.
+acceptanceCriteria:
+  - Generator creates a valid contract from template defaults.
+  - Validate passes all valid contracts and detects invalid contracts.
+  - Invalid lifecycle transition is rejected by schema.
+verification:
+  commands:
+    - npm test
+    - npm run validate
+  successSignal: Tests and validation both pass.
+handoff:
+  owner: orchestrator
+  channel: "#orchestrator"
+  due: {{timestamp}}
+lifecycle:
+  status: in_review
+  transition:
+    from: in_progress
+    to: in_review
+    reason: Implementation complete, awaiting review.
+    at: {{timestamp}}

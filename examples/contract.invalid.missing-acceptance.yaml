@@ -1,0 +1,22 @@
+contractVersion: 1.0.0
+id: ac-invalid-missing-acceptance
+title: Invalid example missing acceptance criteria
+objective: This file should fail because acceptance criteria are missing.
+scope:
+  in: Demonstrate required-field validation.
+  out: None.
+deliverables:
+  - name: Broken example
+    path: examples/contract.invalid.missing-acceptance.yaml
+    owner: coder
+constraints:
+  - This file intentionally violates schema.
+verification:
+  commands:
+    - npm run validate
+  successSignal: Should not pass.
+handoff:
+  owner: orchestrator
+  channel: "#orchestrator"
+lifecycle:
+  status: draft

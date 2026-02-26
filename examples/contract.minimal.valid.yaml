@@ -1,0 +1,24 @@
+contractVersion: 1.0.0
+id: ac-minimal-valid
+title: Minimal valid contract example
+objective: Demonstrate the smallest valid agent contract payload.
+scope:
+  in: Define required fields for planning and handoff.
+  out: No optional process automation.
+deliverables:
+  - name: Contract file
+    path: contracts/minimal.yaml
+    owner: coder
+constraints:
+  - Keep wording concise.
+acceptanceCriteria:
+  - Contract can be validated by schema.
+verification:
+  commands:
+    - npm run validate
+  successSignal: Validation reports this file as PASS.
+handoff:
+  owner: orchestrator
+  channel: "#orchestrator"
+lifecycle:
+  status: draft

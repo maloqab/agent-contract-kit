@@ -1,0 +1,24 @@
+contractVersion: 1.0.0
+id: {{id}}
+title: {{title}}
+objective: Describe the exact user outcome this contract delivers.
+scope:
+  in: Describe what is included in v1.
+  out: Describe explicit non-goals for v1.
+deliverables:
+  - name: Core deliverable
+    path: path/to/file-or-folder
+    owner: coder
+constraints:
+  - Keep implementation minimal and implementation-ready.
+acceptanceCriteria:
+  - Primary user scenario works end-to-end.
+verification:
+  commands:
+    - npm test
+  successSignal: All required checks pass without errors.
+handoff:
+  owner: orchestrator
+  channel: "#orchestrator"
+lifecycle:
+  status: draft

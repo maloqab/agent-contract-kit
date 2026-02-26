@@ -1,0 +1,54 @@
+contractVersion: 1.0.0
+id: ac-invalid-unknown-tool
+title: Invalid unknown tool cross-link
+objective: This file should fail cross-link validation.
+scope:
+  in: Ensure behavior tools are linked to io tools.
+  out: none.
+deliverables:
+  - name: Invalid cross-link example
+    path: examples/contract.invalid.unknown-tool.yaml
+    owner: coder
+constraints:
+  - intentionally invalid
+acceptanceCriteria:
+  - validator rejects unknown tool references
+verification:
+  commands:
+    - npm run validate
+  successSignal: Should fail.
+handoff:
+  owner: orchestrator
+  channel: "#orchestrator"
+lifecycle:
+  status: draft
+behaviorContract:
+  role: coding-agent
+  objective: Demonstrate unknown tool failure.
+  guardrails:
+    - Do not skip cross-link checks.
+  escalation:
+    when:
+      - unknown tool mapping found
+    action: ask-first
+  outputContract:
+    format: markdown
+    requiredSections:
+      - summary
+  toolsUsed:
+    - gh
+ioContract:
+  tools:
+    - name: git
+      inputSchema:
+        type: object
+      outputSchema:
+        type: object
+      errorSchema:
+        type: object
+      policy:
+        timeoutMs: 60000
+        retry:
+          maxAttempts: 1
+          backoff: none
+          idempotent: false

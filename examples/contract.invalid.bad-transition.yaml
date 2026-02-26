@@ -1,0 +1,28 @@
+contractVersion: 1.0.0
+id: ac-invalid-bad-transition
+title: Invalid lifecycle transition example
+objective: This file should fail because it attempts an illegal lifecycle jump.
+scope:
+  in: Demonstrate transition-rule enforcement.
+  out: None.
+deliverables:
+  - name: Broken transition example
+    path: examples/contract.invalid.bad-transition.yaml
+    owner: coder
+constraints:
+  - This file intentionally violates schema.
+acceptanceCriteria:
+  - Validation must reject this file.
+verification:
+  commands:
+    - npm run validate
+  successSignal: Should not pass.
+handoff:
+  owner: orchestrator
+  channel: "#orchestrator"
+lifecycle:
+  status: done
+  transition:
+    from: draft
+    to: done
+    reason: Illegal direct jump for test coverage.

@@ -1,0 +1,23 @@
+{
+  "$id": "https://openclaw.ai/schemas/agent-contract/defs.common.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "shortText": {
+      "type": "string",
+      "minLength": 3
+    },
+    "longText": {
+      "type": "string",
+      "minLength": 5
+    },
+    "jsonSchemaObject": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    }
+  }
+}

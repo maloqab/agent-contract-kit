@@ -1,0 +1,156 @@
+{
+  "$id": "https://openclaw.ai/schemas/agent-contract/agent-contract.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Agent Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "id",
+    "title",
+    "objective",
+    "scope",
+    "deliverables",
+    "constraints",
+    "acceptanceCriteria",
+    "verification",
+    "handoff",
+    "lifecycle"
+  ],
+  "properties": {
+    "contractVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^ac-[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 10
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "in",
+        "out"
+      ],
+      "properties": {
+        "in": {
+          "type": "string",
+          "minLength": 5
+        },
+        "out": {
+          "type": "string",
+          "minLength": 5
+        }
+      }
+    },
+    "deliverables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "path",
+          "owner"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 3
+          },
+          "path": {
+            "type": "string",
+            "minLength": 3
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 2
+          },
+          "required": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 3
+      }
+    },
+    "acceptanceCriteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 5
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commands",
+        "successSignal"
+      ],
+      "properties": {
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 3
+          }
+        },
+        "successSignal": {
+          "type": "string",
+          "minLength": 5
+        }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "owner",
+        "channel"
+      ],
+      "properties": {
+        "owner": {
+          "type": "string",
+          "minLength": 2
+        },
+        "channel": {
+          "type": "string",
+          "minLength": 2
+        },
+        "due": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "lifecycle": {
+      "$ref": "defs.lifecycle.json#/$defs/lifecycle"
+    },
+    "behaviorContract": {
+      "$ref": "behavior-contract.v1.schema.json"
+    },
+    "ioContract": {
+      "$ref": "io-contract.v1.schema.json"
+    }
+  }
+}

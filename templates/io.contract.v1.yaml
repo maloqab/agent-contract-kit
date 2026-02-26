@@ -1,0 +1,30 @@
+tools:
+  - name: git
+    description: Run git operations for commits and history checks.
+    inputSchema:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+    outputSchema:
+      type: object
+      required:
+        - exitCode
+      properties:
+        exitCode:
+          type: integer
+    errorSchema:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    policy:
+      timeoutMs: 60000
+      retry:
+        maxAttempts: 1
+        backoff: none
+        idempotent: false

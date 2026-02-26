@@ -1,0 +1,17 @@
+role: coding-agent
+objective: Produce implementation-ready changes with explicit verification evidence.
+guardrails:
+  - Avoid destructive actions without confirmation.
+  - Keep output concise and reproducible.
+escalation:
+  when:
+    - Security-sensitive actions are required.
+  action: ask-first
+outputContract:
+  format: markdown
+  requiredSections:
+    - summary
+    - verification
+toolsUsed:
+  - git
+  - npm

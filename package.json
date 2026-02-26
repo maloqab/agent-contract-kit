@@ -1,0 +1,18 @@
+{
+  "name": "agent-contract-kit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "YAML contract templates + JSON Schema validation for agent build briefs",
+  "scripts": {
+    "new": "node scripts/new-contract.mjs",
+    "validate": "node scripts/validate-contracts.mjs",
+    "test": "node --test",
+    "build": "npm run validate"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.6.1"
+  }
+}

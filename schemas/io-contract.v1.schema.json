@@ -1,0 +1,85 @@
+{
+  "$id": "https://openclaw.ai/schemas/agent-contract/io-contract.v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tool/API I/O Contract v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tools"
+  ],
+  "properties": {
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "inputSchema",
+          "outputSchema",
+          "errorSchema",
+          "policy"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-_]*$"
+          },
+          "description": {
+            "$ref": "defs.common.json#/$defs/longText"
+          },
+          "inputSchema": {
+            "$ref": "defs.common.json#/$defs/jsonSchemaObject"
+          },
+          "outputSchema": {
+            "$ref": "defs.common.json#/$defs/jsonSchemaObject"
+          },
+          "errorSchema": {
+            "$ref": "defs.common.json#/$defs/jsonSchemaObject"
+          },
+          "policy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "timeoutMs",
+              "retry"
+            ],
+            "properties": {
+              "timeoutMs": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "retry": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "maxAttempts",
+                  "backoff",
+                  "idempotent"
+                ],
+                "properties": {
+                  "maxAttempts": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "backoff": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "linear",
+                      "exponential"
+                    ]
+                  },
+                  "idempotent": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
