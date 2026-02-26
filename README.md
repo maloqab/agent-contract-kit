@@ -79,7 +79,7 @@ npm run validate
 ## Validate behavior
 
 `npm run validate` guarantees:
-- PASS all `*.valid.yaml`
+- PASS all `*.valid.yaml` and `*.valid.yml` (equivalently `*.valid.ya?ml`)
 - EXPECTED_FAIL all `contract.invalid.*`, `behavior.invalid.*`, `io.invalid.*`
 - PASS generated/user files in `contracts/`
 - Enforce cross-links for contract files (behavior `toolsUsed[]` must exist in io `tools[].name`)

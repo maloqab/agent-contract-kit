@@ -48,7 +48,7 @@ npm run new -- --name sample-contract
 
 `npm run validate` guarantees:
 
-1. All `*.valid.yaml` are valid
+1. All `*.valid.yaml` and `*.valid.yml` (i.e., `*.valid.ya?ml`) are valid
 2. All `contract.invalid.*`, `behavior.invalid.*`, `io.invalid.*` are invalid
 3. Cross-link checks run inside the same command (no manual extra step)
 4. Any unexpected outcome returns non-zero
