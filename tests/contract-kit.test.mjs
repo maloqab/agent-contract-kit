@@ -6,10 +6,15 @@ import { spawnSync } from 'node:child_process';
 
 const cwd = process.cwd();
 const contractsDir = join(cwd, 'contracts');
+const examplesDir = join(cwd, 'examples');
 const generatedContract = join(contractsDir, 'tdd-generated.yaml');
 const generatedBothContract = join(contractsDir, 'tdd-both.yaml');
 const brokenContract = join(contractsDir, 'tdd-broken.yaml');
 const unknownToolContract = join(contractsDir, 'tdd-unknown-tool.yaml');
+const draftMismatchContract = join(contractsDir, 'tdd-draft-mismatch.yaml');
+const behaviorYmlContract = join(contractsDir, 'tdd-profile.behavior.yml');
+const ioYmlContract = join(contractsDir, 'tdd-profile.io.yml');
+const validYmlExample = join(examplesDir, 'contract.extra.valid.yml');
 
 function runNodeScript(script, args = []) {
   return spawnSync('node', [script, ...args], {
@@ -76,6 +81,23 @@ test('new-contract supports --profile both while keeping existing UX', () => {
   rmSync(generatedBothContract, { force: true });
 });
 
+test('new-contract fails fast on unknown CLI flags', () => {
+  const unknownFlagOutput = join(contractsDir, 'tdd-unknown-flag.yaml');
+  rmSync(unknownFlagOutput, { force: true });
+
+  const result = runNodeScript('scripts/new-contract.mjs', [
+    '--name',
+    'tdd-unknown-flag',
+    '--wat'
+  ]);
+
+  rmSync(unknownFlagOutput, { force: true });
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for unknown flag');
+  assert.match(result.stdout + result.stderr, /Usage:/);
+  assert.match(result.stdout + result.stderr, /Unknown option: --wat/);
+});
+
 test('validate-contracts passes valid examples and detects invalid examples', () => {
   const result = runNodeScript('scripts/validate-contracts.mjs');
 
@@ -87,6 +109,64 @@ test('validate-contracts passes valid examples and detects invalid examples', ()
   assert.match(result.stdout, /EXPECTED_FAIL\s+examples\/contract\.invalid\./);
   assert.match(result.stdout, /EXPECTED_FAIL\s+examples\/behavior\.invalid\./);
   assert.match(result.stdout, /EXPECTED_FAIL\s+examples\/io\.invalid\./);
+});
+
+test('validate-contracts fails fast on unknown CLI flags', () => {
+  const result = runNodeScript('scripts/validate-contracts.mjs', ['--wat']);
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for unknown flag');
+  assert.match(result.stdout + result.stderr, /Usage:/);
+  assert.match(result.stdout + result.stderr, /Unknown option: --wat/);
+});
+
+test('validate-contracts includes .valid.yml files in valid sweep', () => {
+  writeFileSync(
+    validYmlExample,
+    `contractVersion: 1.0.0\nid: ac-extra-valid\ntitle: Extra valid yml example\nobjective: Ensure .valid.yml is included in the valid scan.\nscope:\n  in: scan .valid.yml files\n  out: no additional output\ndeliverables:\n  - name: extra\n    path: examples/contract.extra.valid.yml\n    owner: coder\nconstraints:\n  - keep it valid\nacceptanceCriteria:\n  - validator marks this file PASS\nverification:\n  commands:\n    - npm run validate\n  successSignal: should pass\nhandoff:\n  owner: orchestrator\n  channel: '#orchestrator'\nlifecycle:\n  status: draft\n`
+  );
+
+  const result = runNodeScript('scripts/validate-contracts.mjs');
+
+  rmSync(validYmlExample, { force: true });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /PASS\s+examples\/contract\.extra\.valid\.yml/);
+});
+
+test('validate-contracts classifies .behavior.yml and .io.yml contract files', () => {
+  writeFileSync(
+    behaviorYmlContract,
+    `role: coding-agent\nobjective: Validate behavior classification for .behavior.yml files.\nguardrails:\n  - no destructive actions\nescalation:\n  when:\n    - ambiguous requirements\n  action: ask-first\noutputContract:\n  format: markdown\n  requiredSections:\n    - summary\ntoolsUsed:\n  - git\n`
+  );
+
+  writeFileSync(
+    ioYmlContract,
+    `tools:\n  - name: git\n    inputSchema:\n      type: object\n    outputSchema:\n      type: object\n    errorSchema:\n      type: object\n    policy:\n      timeoutMs: 60000\n      retry:\n        maxAttempts: 1\n        backoff: none\n        idempotent: false\n`
+  );
+
+  const result = runNodeScript('scripts/validate-contracts.mjs');
+
+  rmSync(behaviorYmlContract, { force: true });
+  rmSync(ioYmlContract, { force: true });
+
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /PASS\s+contracts\/tdd-profile\.behavior\.yml/);
+  assert.match(result.stdout, /PASS\s+contracts\/tdd-profile\.io\.yml/);
+});
+
+test('validate-contracts fails when draft status mismatches transition.to', () => {
+  writeFileSync(
+    draftMismatchContract,
+    `contractVersion: 1.0.0\nid: ac-draft-mismatch\ntitle: Draft mismatch\nobjective: Ensure lifecycle status matches transition.to for all statuses.\nscope:\n  in: validate draft mismatch\n  out: out of scope\ndeliverables:\n  - name: mismatch\n    path: contracts/tdd-draft-mismatch.yaml\n    owner: coder\nconstraints:\n  - none\nacceptanceCriteria:\n  - draft mismatch should fail\nverification:\n  commands:\n    - npm run validate\n  successSignal: should fail\nhandoff:\n  owner: orchestrator\n  channel: '#orchestrator'\nlifecycle:\n  status: draft\n  transition:\n    from: draft\n    to: ready\n    reason: mismatch test\n`
+  );
+
+  const result = runNodeScript('scripts/validate-contracts.mjs');
+
+  rmSync(draftMismatchContract, { force: true });
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for draft mismatch');
+  assert.match(result.stdout + result.stderr, /contracts\/tdd-draft-mismatch\.yaml/);
+  assert.match(result.stdout + result.stderr, /lifecycle\/transition/);
 });
 
 test('validate-contracts returns non-zero with per-file errors for bad transition', () => {

@@ -215,6 +215,26 @@
           "if": {
             "properties": {
               "status": {
+                "const": "draft"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "transition": {
+                "properties": {
+                  "to": {
+                    "const": "draft"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
                 "const": "ready"
               }
             }

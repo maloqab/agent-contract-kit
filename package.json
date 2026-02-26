@@ -1,6 +1,6 @@
 {
   "name": "agent-contract-kit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "YAML contract templates + JSON Schema validation for agent build briefs",

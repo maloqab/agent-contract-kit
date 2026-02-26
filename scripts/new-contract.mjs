@@ -9,10 +9,23 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = resolve(__dirname, '..');
 
-const args = parseArgs(process.argv.slice(2));
+let args;
+try {
+  args = parseArgs(process.argv.slice(2));
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  printUsage();
+  process.exit(1);
+}
+
+if (args.help) {
+  printUsage();
+  process.exit(0);
+}
 
 if (!args.name) {
   console.error('Missing required argument: --name <contract-name>');
+  printUsage();
   process.exit(1);
 }
 
@@ -75,42 +88,64 @@ function parseArgs(argv) {
     template: 'minimal',
     profile: 'contract',
     out: undefined,
-    force: false
+    force: false,
+    help: false
   };
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
 
-    if (token === '--name' && argv[i + 1]) {
-      output.name = argv[i + 1];
-      i += 1;
-      continue;
-    }
-
-    if (token === '--template' && argv[i + 1]) {
-      output.template = argv[i + 1];
-      i += 1;
-      continue;
-    }
-
-    if (token === '--profile' && argv[i + 1]) {
-      output.profile = argv[i + 1];
-      i += 1;
-      continue;
-    }
-
-    if (token === '--out' && argv[i + 1]) {
-      output.out = argv[i + 1];
-      i += 1;
-      continue;
-    }
-
-    if (token === '--force') {
-      output.force = true;
+    switch (token) {
+      case '--name':
+        output.name = expectValue(argv, i, '--name');
+        i += 1;
+        break;
+      case '--template':
+        output.template = expectValue(argv, i, '--template');
+        i += 1;
+        break;
+      case '--profile':
+        output.profile = expectValue(argv, i, '--profile');
+        i += 1;
+        break;
+      case '--out':
+        output.out = expectValue(argv, i, '--out');
+        i += 1;
+        break;
+      case '--force':
+        output.force = true;
+        break;
+      case '--help':
+      case '-h':
+        output.help = true;
+        break;
+      default:
+        if (token.startsWith('-')) {
+          throw new Error(`Unknown option: ${token}`);
+        }
+        throw new Error(`Unexpected argument: ${token}`);
     }
   }
 
   return output;
+}
+
+function expectValue(argv, index, flagName) {
+  const value = argv[index + 1];
+  if (!value || value.startsWith('-')) {
+    throw new Error(`Missing value for ${flagName}`);
+  }
+  return value;
+}
+
+function printUsage() {
+  console.error('Usage: npm run new -- --name <contract-name> [options]');
+  console.error('Options:');
+  console.error('  --template <minimal|full>');
+  console.error('  --profile <contract|both|behavior|io>');
+  console.error('  --out <path>');
+  console.error('  --force');
+  console.error('  --help, -h');
 }
 
 function defaultOutputPath(slug, profile) {

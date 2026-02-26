@@ -20,7 +20,20 @@ const schemaPaths = {
   contract: resolve(rootDir, 'schemas/agent-contract.v1.schema.json')
 };
 
-const args = parseArgs(process.argv.slice(2));
+let args;
+try {
+  args = parseArgs(process.argv.slice(2));
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  printUsage();
+  process.exit(1);
+}
+
+if (args.help) {
+  printUsage();
+  process.exit(0);
+}
+
 const examplesDir = resolve(rootDir, args.examplesDir);
 const contractsDir = resolve(rootDir, args.contractsDir);
 
@@ -45,7 +58,7 @@ const validators = {
 };
 
 const exampleFiles = findYamlFiles(examplesDir);
-const validExampleFiles = exampleFiles.filter((file) => file.endsWith('.valid.yaml'));
+const validExampleFiles = exampleFiles.filter((file) => /\.valid\.ya?ml$/i.test(file));
 const invalidExampleFiles = exampleFiles.filter((file) =>
   /(?:contract|behavior|io)\.invalid\..+\.ya?ml$/i.test(file)
 );
@@ -95,23 +108,51 @@ if (failed) {
 function parseArgs(argv) {
   const output = {
     examplesDir: 'examples',
-    contractsDir: 'contracts'
+    contractsDir: 'contracts',
+    help: false
   };
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
-    if (token === '--examples-dir' && argv[i + 1]) {
-      output.examplesDir = argv[i + 1];
-      i += 1;
-      continue;
-    }
-    if (token === '--contracts-dir' && argv[i + 1]) {
-      output.contractsDir = argv[i + 1];
-      i += 1;
+
+    switch (token) {
+      case '--examples-dir':
+        output.examplesDir = expectValue(argv, i, '--examples-dir');
+        i += 1;
+        break;
+      case '--contracts-dir':
+        output.contractsDir = expectValue(argv, i, '--contracts-dir');
+        i += 1;
+        break;
+      case '--help':
+      case '-h':
+        output.help = true;
+        break;
+      default:
+        if (token.startsWith('-')) {
+          throw new Error(`Unknown option: ${token}`);
+        }
+        throw new Error(`Unexpected argument: ${token}`);
     }
   }
 
   return output;
+}
+
+function expectValue(argv, index, flagName) {
+  const value = argv[index + 1];
+  if (!value || value.startsWith('-')) {
+    throw new Error(`Missing value for ${flagName}`);
+  }
+  return value;
+}
+
+function printUsage() {
+  console.error('Usage: npm run validate [-- --examples-dir <dir> --contracts-dir <dir>]');
+  console.error('Options:');
+  console.error('  --examples-dir <dir>');
+  console.error('  --contracts-dir <dir>');
+  console.error('  --help, -h');
 }
 
 function findYamlFiles(dir) {
@@ -175,13 +216,13 @@ function validateFile(filePath, compiledValidators) {
 }
 
 function classifyFile(filePath) {
-  const file = basename(filePath);
+  const file = basename(filePath).toLowerCase();
 
-  if (file.startsWith('behavior.') || file.endsWith('.behavior.yaml')) {
+  if (/^behavior\..+\.ya?ml$/.test(file) || /\.behavior\.ya?ml$/.test(file)) {
     return 'behavior';
   }
 
-  if (file.startsWith('io.') || file.endsWith('.io.yaml')) {
+  if (/^io\..+\.ya?ml$/.test(file) || /\.io\.ya?ml$/.test(file)) {
     return 'io';
   }
 

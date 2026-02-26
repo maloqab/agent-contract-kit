@@ -24,15 +24,15 @@ This keeps v1 lightweight while enforcing structure and cross-contract consisten
 - Valid/invalid coverage across contract/behavior/io
 - Packaging + docs
 
-## Repo paths
+## Repo paths (relative)
 
-- Kit root: `/Users/jarvisz/clawd/skills/agent-contract-kit/`
-- Companion doc: `/Users/jarvisz/clawd/docs/agent-contract-kit.md`
+- Kit root: `skills/agent-contract-kit/`
+- Companion doc: `docs/agent-contract-kit.md`
 
 ## Command UX (fresh clone)
 
 ```bash
-cd /Users/jarvisz/clawd/skills/agent-contract-kit
+cd skills/agent-contract-kit
 npm install
 npm run new -- --name sample-contract --profile both
 npm run validate
