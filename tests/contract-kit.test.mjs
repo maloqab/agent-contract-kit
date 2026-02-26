@@ -16,6 +16,8 @@ const behaviorYmlContract = join(contractsDir, 'tdd-profile.behavior.yml');
 const ioYmlContract = join(contractsDir, 'tdd-profile.io.yml');
 const validYmlExample = join(examplesDir, 'contract.extra.valid.yml');
 const tmpExamplesDir = join(cwd, '.tmp-empty-examples');
+const tmpExamplesFile = join(cwd, '.tmp-examples-file');
+const tmpContractsFile = join(cwd, '.tmp-contracts-file');
 const duplicateIoToolContract = join(contractsDir, 'tdd-duplicate-io-tool.yaml');
 
 function runNodeScript(script, args = []) {
@@ -170,6 +172,42 @@ test('validate-contracts fails when no example files are found', () => {
 
   assert.notEqual(result.status, 0, 'expected non-zero exit for empty examples dir');
   assert.match(result.stdout + result.stderr, /No example YAML files found/);
+});
+
+test('validate-contracts fails cleanly when examples-dir points to a file', () => {
+  rmSync(tmpExamplesFile, { force: true });
+  writeFileSync(tmpExamplesFile, 'not-a-directory\n');
+
+  const result = runNodeScript('scripts/validate-contracts.mjs', [
+    '--examples-dir',
+    '.tmp-examples-file',
+    '--contracts-dir',
+    'contracts'
+  ]);
+
+  rmSync(tmpExamplesFile, { force: true });
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for file examples-dir');
+  assert.match(result.stdout + result.stderr, /Examples path is not a directory/);
+  assert.doesNotMatch(result.stdout + result.stderr, /ENOTDIR|readdirSync|node:fs:/);
+});
+
+test('validate-contracts fails cleanly when contracts-dir points to a file', () => {
+  rmSync(tmpContractsFile, { force: true });
+  writeFileSync(tmpContractsFile, 'not-a-directory\n');
+
+  const result = runNodeScript('scripts/validate-contracts.mjs', [
+    '--examples-dir',
+    'examples',
+    '--contracts-dir',
+    '.tmp-contracts-file'
+  ]);
+
+  rmSync(tmpContractsFile, { force: true });
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for file contracts-dir');
+  assert.match(result.stdout + result.stderr, /Contracts path is not a directory/);
+  assert.doesNotMatch(result.stdout + result.stderr, /ENOTDIR|readdirSync|node:fs:/);
 });
 
 test('validate-contracts includes .valid.yml files in valid sweep', () => {

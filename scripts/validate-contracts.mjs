@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { basename, resolve, relative, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
@@ -42,8 +42,18 @@ if (!existsSync(examplesDir)) {
   process.exit(1);
 }
 
+if (!isDirectory(examplesDir)) {
+  console.error(`Examples path is not a directory: ${examplesDir}`);
+  process.exit(1);
+}
+
 if (args.contractsDirProvided && !existsSync(contractsDir)) {
   console.error(`Contracts directory does not exist: ${contractsDir}`);
+  process.exit(1);
+}
+
+if (existsSync(contractsDir) && !isDirectory(contractsDir)) {
+  console.error(`Contracts path is not a directory: ${contractsDir}`);
   process.exit(1);
 }
 
@@ -132,7 +142,6 @@ function parseArgs(argv) {
   const output = {
     examplesDir: 'examples',
     contractsDir: 'contracts',
-    examplesDirProvided: false,
     contractsDirProvided: false,
     help: false
   };
@@ -143,7 +152,6 @@ function parseArgs(argv) {
     switch (token) {
       case '--examples-dir':
         output.examplesDir = expectValue(argv, i, '--examples-dir');
-        output.examplesDirProvided = true;
         i += 1;
         break;
       case '--contracts-dir':
@@ -323,6 +331,10 @@ function findDuplicateToolErrors(tools, basePath) {
   }
 
   return errors;
+}
+
+function isDirectory(dirPath) {
+  return statSync(dirPath).isDirectory();
 }
 
 function printErrors(errors) {
