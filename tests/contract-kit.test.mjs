@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -15,6 +15,8 @@ const draftMismatchContract = join(contractsDir, 'tdd-draft-mismatch.yaml');
 const behaviorYmlContract = join(contractsDir, 'tdd-profile.behavior.yml');
 const ioYmlContract = join(contractsDir, 'tdd-profile.io.yml');
 const validYmlExample = join(examplesDir, 'contract.extra.valid.yml');
+const tmpExamplesDir = join(cwd, '.tmp-empty-examples');
+const duplicateIoToolContract = join(contractsDir, 'tdd-duplicate-io-tool.yaml');
 
 function runNodeScript(script, args = []) {
   return spawnSync('node', [script, ...args], {
@@ -98,6 +100,26 @@ test('new-contract fails fast on unknown CLI flags', () => {
   assert.match(result.stdout + result.stderr, /Unknown option: --wat/);
 });
 
+test('new-contract rejects invalid --template values', () => {
+  const invalidTemplateOutput = join(contractsDir, 'template-repro.yaml');
+  rmSync(invalidTemplateOutput, { force: true });
+
+  const result = runNodeScript('scripts/new-contract.mjs', [
+    '--name',
+    'template-repro',
+    '--template',
+    'nonsense'
+  ]);
+
+  const outputExists = existsSync(invalidTemplateOutput);
+  rmSync(invalidTemplateOutput, { force: true });
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for invalid template');
+  assert.equal(outputExists, false, 'expected no output file for invalid template');
+  assert.match(result.stdout + result.stderr, /Invalid --template value/);
+  assert.match(result.stdout + result.stderr, /Usage:/);
+});
+
 test('validate-contracts passes valid examples and detects invalid examples', () => {
   const result = runNodeScript('scripts/validate-contracts.mjs');
 
@@ -117,6 +139,37 @@ test('validate-contracts fails fast on unknown CLI flags', () => {
   assert.notEqual(result.status, 0, 'expected non-zero exit for unknown flag');
   assert.match(result.stdout + result.stderr, /Usage:/);
   assert.match(result.stdout + result.stderr, /Unknown option: --wat/);
+});
+
+test('validate-contracts fails when examples-dir does not exist', () => {
+  rmSync(tmpExamplesDir, { recursive: true, force: true });
+
+  const result = runNodeScript('scripts/validate-contracts.mjs', [
+    '--examples-dir',
+    '.tmp-empty-examples',
+    '--contracts-dir',
+    'contracts'
+  ]);
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for missing examples dir');
+  assert.match(result.stdout + result.stderr, /Examples directory does not exist/);
+});
+
+test('validate-contracts fails when no example files are found', () => {
+  rmSync(tmpExamplesDir, { recursive: true, force: true });
+  mkdirSync(tmpExamplesDir, { recursive: true });
+
+  const result = runNodeScript('scripts/validate-contracts.mjs', [
+    '--examples-dir',
+    '.tmp-empty-examples',
+    '--contracts-dir',
+    'contracts'
+  ]);
+
+  rmSync(tmpExamplesDir, { recursive: true, force: true });
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for empty examples dir');
+  assert.match(result.stdout + result.stderr, /No example YAML files found/);
 });
 
 test('validate-contracts includes .valid.yml files in valid sweep', () => {
@@ -182,6 +235,21 @@ test('validate-contracts returns non-zero with per-file errors for bad transitio
   assert.notEqual(result.status, 0, 'expected non-zero exit for invalid contract');
   assert.match(result.stdout + result.stderr, /contracts\/tdd-broken\.yaml/);
   assert.match(result.stdout + result.stderr, /lifecycle\/transition/);
+});
+
+test('validate-contracts returns non-zero on duplicate io tool names', () => {
+  writeFileSync(
+    duplicateIoToolContract,
+    `contractVersion: 1.0.0\nid: ac-duplicate-io-tool\ntitle: Duplicate io tool names\nobjective: Ensure duplicate io tool names are rejected.\nscope:\n  in: detect duplicate io tool names\n  out: none\ndeliverables:\n  - name: duplicate-test\n    path: contracts/tdd-duplicate-io-tool.yaml\n    owner: coder\nconstraints:\n  - none\nacceptanceCriteria:\n  - duplicate names fail validation\nverification:\n  commands:\n    - npm run validate\n  successSignal: should fail\nhandoff:\n  owner: orchestrator\n  channel: '#orchestrator'\nlifecycle:\n  status: draft\nbehaviorContract:\n  role: coding-agent\n  objective: validate duplicate io name check\n  guardrails:\n    - do not allow duplicate tool definitions\n  escalation:\n    when:\n      - duplicate tools are detected\n    action: ask-first\n  outputContract:\n    format: markdown\n    requiredSections:\n      - summary\n  toolsUsed:\n    - git\nioContract:\n  tools:\n    - name: git\n      inputSchema:\n        type: object\n      outputSchema:\n        type: object\n      errorSchema:\n        type: object\n      policy:\n        timeoutMs: 30000\n        retry:\n          maxAttempts: 1\n          backoff: none\n          idempotent: false\n    - name: git\n      inputSchema:\n        type: object\n      outputSchema:\n        type: object\n      errorSchema:\n        type: object\n      policy:\n        timeoutMs: 30000\n        retry:\n          maxAttempts: 1\n          backoff: none\n          idempotent: false\n`
+  );
+
+  const result = runNodeScript('scripts/validate-contracts.mjs');
+
+  rmSync(duplicateIoToolContract, { force: true });
+
+  assert.notEqual(result.status, 0, 'expected non-zero exit for duplicate io tools');
+  assert.match(result.stdout + result.stderr, /contracts\/tdd-duplicate-io-tool\.yaml/);
+  assert.match(result.stdout + result.stderr, /duplicate tool name: git/);
 });
 
 test('validate-contracts returns non-zero on unknown-tool cross-link failure', () => {

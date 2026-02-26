@@ -37,6 +37,16 @@ if (args.help) {
 const examplesDir = resolve(rootDir, args.examplesDir);
 const contractsDir = resolve(rootDir, args.contractsDir);
 
+if (!existsSync(examplesDir)) {
+  console.error(`Examples directory does not exist: ${examplesDir}`);
+  process.exit(1);
+}
+
+if (args.contractsDirProvided && !existsSync(contractsDir)) {
+  console.error(`Contracts directory does not exist: ${contractsDir}`);
+  process.exit(1);
+}
+
 const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
 
@@ -58,10 +68,23 @@ const validators = {
 };
 
 const exampleFiles = findYamlFiles(examplesDir);
+if (exampleFiles.length === 0) {
+  console.error(`No example YAML files found in: ${examplesDir}`);
+  process.exit(1);
+}
+
 const validExampleFiles = exampleFiles.filter((file) => /\.valid\.ya?ml$/i.test(file));
 const invalidExampleFiles = exampleFiles.filter((file) =>
   /(?:contract|behavior|io)\.invalid\..+\.ya?ml$/i.test(file)
 );
+
+if (validExampleFiles.length + invalidExampleFiles.length === 0) {
+  console.error(
+    `No candidate example files found (expected .valid.* or *.invalid.* patterns) in: ${examplesDir}`
+  );
+  process.exit(1);
+}
+
 const contractFiles = findYamlFiles(contractsDir);
 
 let failed = false;
@@ -109,6 +132,8 @@ function parseArgs(argv) {
   const output = {
     examplesDir: 'examples',
     contractsDir: 'contracts',
+    examplesDirProvided: false,
+    contractsDirProvided: false,
     help: false
   };
 
@@ -118,10 +143,12 @@ function parseArgs(argv) {
     switch (token) {
       case '--examples-dir':
         output.examplesDir = expectValue(argv, i, '--examples-dir');
+        output.examplesDirProvided = true;
         i += 1;
         break;
       case '--contracts-dir':
         output.contractsDir = expectValue(argv, i, '--contracts-dir');
+        output.contractsDirProvided = true;
         i += 1;
         break;
       case '--help':
@@ -198,9 +225,19 @@ function validateFile(filePath, compiledValidators) {
           `${error.instancePath || '/'} ${error.message}`
         );
 
-    const crossLinkErrors = schemaType === 'contract' ? validateCrossLinks(parsed) : [];
+    const contractCrossLinkErrors =
+      schemaType === 'contract' ? validateCrossLinks(parsed) : [];
 
-    const errors = [...schemaErrors, ...crossLinkErrors];
+    const duplicateIoNameErrors =
+      schemaType === 'io'
+        ? findDuplicateToolErrors(parsed?.tools, '/tools')
+        : [];
+
+    const errors = [
+      ...schemaErrors,
+      ...contractCrossLinkErrors,
+      ...duplicateIoNameErrors
+    ];
     return {
       ok: errors.length === 0,
       errors
@@ -231,12 +268,8 @@ function classifyFile(filePath) {
 
 function validateCrossLinks(contract) {
   if (!contract || typeof contract !== 'object') return [];
-  if (!contract.behaviorContract || !contract.ioContract) return [];
 
-  const usedTools = Array.isArray(contract.behaviorContract.toolsUsed)
-    ? contract.behaviorContract.toolsUsed
-    : [];
-  const ioTools = Array.isArray(contract.ioContract.tools)
+  const ioTools = Array.isArray(contract.ioContract?.tools)
     ? contract.ioContract.tools
     : [];
   const ioToolNames = new Set(
@@ -245,7 +278,18 @@ function validateCrossLinks(contract) {
       .filter((toolName) => typeof toolName === 'string')
   );
 
-  const errors = [];
+  const errors = [
+    ...findDuplicateToolErrors(ioTools, '/ioContract/tools')
+  ];
+
+  if (!contract.behaviorContract || !contract.ioContract) {
+    return errors;
+  }
+
+  const usedTools = Array.isArray(contract.behaviorContract.toolsUsed)
+    ? contract.behaviorContract.toolsUsed
+    : [];
+
   for (let i = 0; i < usedTools.length; i += 1) {
     const toolName = usedTools[i];
     if (!ioToolNames.has(toolName)) {
@@ -253,6 +297,29 @@ function validateCrossLinks(contract) {
         `CROSS_LINK /behaviorContract/toolsUsed/${i} unknown tool reference: ${toolName}`
       );
     }
+  }
+
+  return errors;
+}
+
+function findDuplicateToolErrors(tools, basePath) {
+  if (!Array.isArray(tools)) return [];
+
+  const seen = new Map();
+  const errors = [];
+
+  for (let i = 0; i < tools.length; i += 1) {
+    const toolName = tools[i]?.name;
+    if (typeof toolName !== 'string') continue;
+
+    if (seen.has(toolName)) {
+      errors.push(
+        `CROSS_LINK ${basePath}/${i} duplicate tool name: ${toolName}`
+      );
+      continue;
+    }
+
+    seen.set(toolName, i);
   }
 
   return errors;

@@ -37,10 +37,17 @@ if (!slug) {
 
 if (!['contract', 'both', 'behavior', 'io'].includes(args.profile)) {
   console.error('Invalid --profile value. Use one of: contract, both, behavior, io');
+  printUsage();
   process.exit(1);
 }
 
-const templateName = args.template === 'full' ? 'full' : 'minimal';
+if (!['minimal', 'full'].includes(args.template)) {
+  console.error('Invalid --template value. Use one of: minimal, full');
+  printUsage();
+  process.exit(1);
+}
+
+const templateName = args.template;
 const outputPath = resolve(rootDir, args.out || defaultOutputPath(slug, args.profile));
 
 if (existsSync(outputPath) && !args.force) {
